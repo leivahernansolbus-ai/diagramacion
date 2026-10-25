@@ -205,7 +205,7 @@
     <div id="sec-dashboard" class="content-section active">
       <div class="card">
         <h2>Panel Operativo General</h2>
-        <p>Bienvenido al sistema de diagramación de transporte. Utilice la barra lateral izquierda para navegar entre el administrador de líneas, los turnos, la planificación mensual y la nueva matriz de diagramación.</p>
+        <p>Bienvenido al sistema de diagramación de transporte. Utilice la barra lateral izquierda para navegar entre el administrador de líneas, los turnos, la planificación mensual y la matriz de diagramación.</p>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 25px;">
           <div style="background: #e8f4fd; padding: 20px; border-radius: 8px; border-left: 5px solid #0066cc;">
@@ -672,11 +672,15 @@
       const matrizKey = `matriz_${anio}_${mes}_${lineaSel}`;
       let datosMatriz = JSON.parse(localStorage.getItem(matrizKey) || '{}');
 
-      // Fila de Cabecera (Días)
+      const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+      // Fila de Cabecera (Días y Nombre del Día de la Semana)
       let theadHtml = '<thead><tr>';
       theadHtml += `<th class="col-fija-servicio">SERVICIO / DÍA</th>`;
       for (let d = 1; d <= totalDias; d++) {
-        theadHtml += `<th>${d}</th>`;
+        const fechaObj = new Date(anio, mes - 1, d);
+        const nombreDia = diasSemana[fechaObj.getDay()];
+        theadHtml += `<th><span style="font-size: 10px; display: block; color: #cbd5e1; font-weight: normal;">${nombreDia}</span>${d}</th>`;
       }
       theadHtml += '</tr></thead>';
 
