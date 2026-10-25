@@ -15,7 +15,7 @@
       padding: 20px;
     }
     .container {
-      max-width: 900px;
+      max-width: 950px;
       margin: 0 auto;
       background: white;
       padding: 25px;
@@ -47,13 +47,63 @@
     .btn-volver:hover {
       background-color: #5a6268;
     }
+
+    /* Formulario de Alta */
+    .form-card {
+      background-color: #f8f9fa;
+      border: 1px solid #e2e8f0;
+      padding: 18px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .form-card h2 {
+      margin-top: 0;
+      font-size: 16px;
+      color: #0066cc;
+      margin-bottom: 12px;
+    }
+    .form-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .form-row input {
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+    }
+    .input-legajo {
+      flex: 1;
+      min-width: 120px;
+    }
+    .input-nombre {
+      flex: 2;
+      min-width: 220px;
+    }
+    .btn-agregar {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-agregar:hover {
+      background-color: #218838;
+    }
+
+    /* Buscador */
     .search-box {
       margin-bottom: 20px;
     }
     .search-box input {
       width: 100%;
       padding: 12px 15px;
-      font-size: 16px;
+      font-size: 15px;
       border: 1px solid #ccc;
       border-radius: 6px;
       outline: none;
@@ -61,6 +111,8 @@
     .search-box input:focus {
       border-color: #0066cc;
     }
+
+    /* Tabla */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -75,17 +127,35 @@
       background-color: #0066cc;
       color: white;
       text-transform: uppercase;
-      font-size: 14px;
+      font-size: 13px;
       letter-spacing: 0.5px;
     }
     tr:hover {
       background-color: #f1f5f9;
+    }
+    .btn-eliminar {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-eliminar:hover {
+      background-color: #c82333;
     }
     .no-result {
       text-align: center;
       padding: 20px;
       color: #777;
       display: none;
+    }
+    .col-acciones {
+      width: 100px;
+      text-align: center;
     }
   </style>
 </head>
@@ -97,15 +167,28 @@
       <a href="index.html" class="btn-volver">← Volver al Sistema</a>
     </div>
     
+    <!-- Formulario para Agregar Nuevo Conductor -->
+    <div class="form-card">
+      <h2>➕ Agregar Nuevo Conductor</h2>
+      <div class="form-row">
+        <input type="text" id="newLegajo" class="input-legajo" placeholder="Legajo (ej: 7999)">
+        <input type="text" id="newNombre" class="input-nombre" placeholder="Nombre y Apellido completo">
+        <button class="btn-agregar" onclick="agregarConductor()">Agregar</button>
+      </div>
+    </div>
+
+    <!-- Buscador -->
     <div class="search-box">
       <input type="text" id="searchInput" onkeyup="filtrarLista()" placeholder="Buscar por Legajo o Nombre y Apellido...">
     </div>
 
+    <!-- Tabla -->
     <table id="tablaConductores">
       <thead>
         <tr>
           <th>Legajo</th>
           <th>Nombre y Apellido</th>
+          <th class="col-acciones">Acciones</th>
         </tr>
       </thead>
       <tbody id="cuerpoTabla">
@@ -116,7 +199,7 @@
   </div>
 
   <script>
-    const conductores = [
+    let conductores = [
       { leg: "7253", nombre: "SORIA GERARDO DAVID" },
       { leg: "7243", nombre: "DE MIGUEL CRISTIAN RODRIGO" },
       { leg: "7339", nombre: "MEDRAN KEVIN NICOLAS" },
@@ -302,9 +385,15 @@
     function cargarTabla(datos) {
       const cuerpo = document.getElementById('cuerpoTabla');
       cuerpo.innerHTML = '';
-      datos.forEach(c => {
+      datos.forEach((c) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td><strong>${c.leg}</strong></td><td>${c.nombre}</td>`;
+        tr.innerHTML = `
+          <td><strong>${c.leg}</strong></td>
+          <td>${c.nombre}</td>
+          <td class="col-acciones">
+            <button class="btn-eliminar" onclick="eliminarConductor('${c.leg}')">Eliminar</button>
+          </td>
+        `;
         cuerpo.appendChild(tr);
       });
     }
@@ -322,6 +411,43 @@
         filtrados.length === 0 ? 'block' : 'none';
     }
 
+    function agregarConductor() {
+      const legajoInput = document.getElementById('newLegajo');
+      const nombreInput = document.getElementById('newNombre');
+
+      const legajoVal = legajoInput.value.trim();
+      const nombreVal = nombreInput.value.trim().toUpperCase();
+
+      if (!legajoVal || !nombreVal) {
+        alert('Por favor complete tanto el número de Legajo como el Nombre y Apellido.');
+        return;
+      }
+
+      // Verificar si el legajo ya existe
+      const existe = conductores.some(c => c.leg === legajoVal);
+      if (existe) {
+        alert(`El legajo ${legajoVal} ya pertenece a otro conductor.`);
+        return;
+      }
+
+      // Agregar al inicio del arreglo
+      conductores.unshift({ leg: legajoVal, nombre: nombreVal });
+
+      // Limpiar campos y refrescar
+      legajoInput.value = '';
+      nombreInput.value = '';
+      document.getElementById('searchInput').value = '';
+      filtrarLista();
+    }
+
+    function eliminarConductor(legajo) {
+      if (confirm(`¿Está seguro de eliminar al conductor con Legajo ${legajo}?`)) {
+        conductores = conductores.filter(c => c.leg !== legajo);
+        filtrarLista();
+      }
+    }
+
+    // Carga inicial
     cargarTabla(conductores);
   </script>
 
