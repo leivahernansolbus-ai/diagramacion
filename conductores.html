@@ -100,9 +100,9 @@
       background-color: #218838;
     }
 
-    /* Buscador */
+    /* Buscador y Controles */
     .search-box {
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     .search-box input {
       width: 100%;
@@ -114,6 +114,22 @@
     }
     .search-box input:focus {
       border-color: #0066cc;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 13px;
+      color: #555;
+    }
+    .btn-reset {
+      background: none;
+      border: none;
+      color: #dc3545;
+      cursor: pointer;
+      text-decoration: underline;
+      font-size: 12px;
     }
 
     /* Tabla */
@@ -201,6 +217,11 @@
       <input type="text" id="searchInput" onkeyup="filtrarLista()" placeholder="Buscar por Legajo, Nombre o Línea...">
     </div>
 
+    <div class="toolbar">
+      <span id="estadoGuardado">💾 Los cambios se guardan automáticamente en este navegador.</span>
+      <button class="btn-reset" onclick="restablecerOriginales()">Restablecer Lista Base</button>
+    </div>
+
     <!-- Tabla -->
     <table id="tablaConductores">
       <thead>
@@ -219,8 +240,8 @@
   </div>
 
   <script>
-    let conductores = [
-      { leg: 864, nombre: "MONIER ROMINA SOLEDAD", lineas: "Línea 10, Línea 20" },
+    const conductoresBase = [
+      { leg: 864, nombre: "MONIER ROMINA SOLEDAD", lineas: "" },
       { leg: 918, nombre: "BARRETO LICIA VALENTINA", lineas: "" },
       { leg: 928, nombre: "CARDINALE ZARATE FRANCO DANIEL", lineas: "" },
       { leg: 980, nombre: "VILLA HORACIO CIRIO", lineas: "" },
@@ -402,6 +423,23 @@
       { leg: 7966, nombre: "SUAREZ NILDA", lineas: "" }
     ];
 
+    let conductores = [];
+
+    // Cargar datos guardados o inicializar
+    function cargarStorage() {
+      const guardados = localStorage.getItem('conductores_data');
+      if (guardados) {
+        conductores = JSON.parse(guardados);
+      } else {
+        conductores = JSON.parse(JSON.stringify(conductoresBase));
+      }
+      ordenarLista();
+    }
+
+    function guardarStorage() {
+      localStorage.setItem('conductores_data', JSON.stringify(conductores));
+    }
+
     function ordenarLista() {
       conductores.sort((a, b) => Number(a.leg) - Number(b.leg));
     }
@@ -431,6 +469,7 @@
       const conductor = conductores.find(c => Number(c.leg) === Number(legajo));
       if (conductor) {
         conductor.lineas = nuevasLineas;
+        guardarStorage();
       }
     }
 
@@ -462,20 +501,16 @@
         return;
       }
 
-      // Verificar si el legajo ya existe
       const existe = conductores.some(c => Number(c.leg) === legajoVal);
       if (existe) {
         alert(`El legajo ${legajoVal} ya pertenece a otro conductor.`);
         return;
       }
 
-      // Agregar
       conductores.push({ leg: legajoVal, nombre: nombreVal, lineas: lineasVal });
-
-      // Re-ordenar por legajo
       ordenarLista();
+      guardarStorage();
 
-      // Limpiar campos y refrescar
       legajoInput.value = '';
       nombreInput.value = '';
       lineasInput.value = '';
@@ -486,12 +521,21 @@
     function eliminarConductor(legajo) {
       if (confirm(`¿Está seguro de eliminar al conductor con Legajo ${legajo}?`)) {
         conductores = conductores.filter(c => Number(c.leg) !== Number(legajo));
+        guardarStorage();
         filtrarLista();
       }
     }
 
+    function restablecerOriginales() {
+      if (confirm('¿Desea restablecer la lista original? Se perderán las modificaciones personalizadas no guardadas en código.')) {
+        localStorage.removeItem('conductores_data');
+        cargarStorage();
+        cargarTabla(conductores);
+      }
+    }
+
     // Inicializar
-    ordenarLista();
+    cargarStorage();
     cargarTabla(conductores);
   </script>
 
