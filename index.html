@@ -965,3 +965,310 @@ eof
 2. **Servicios y Turnos Personalizados por Línea**: Cada línea posee su propia estructura de servicios, turnos y horarios particulares (diferentes cantidades de servicios y nomenclaturas por cada línea).
 3. **Habilitaciones por Conductor**: Al registrar o editar a tus conductores, puedes marcar en qué líneas están habilitados para conducir. El sistema validará esto al momento de hacer la asignación automática y en los desplegables.
 4. **Panel de Control Dinámico**: Visualización de baches y cobertura desglosada por cada línea en tiempo real.
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nómina de Conductores</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .search-box {
+      margin-bottom: 20px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 12px 15px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+    }
+    .search-box input:focus {
+      border-color: #0066cc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    th {
+      background-color: #0066cc;
+      color: white;
+      text-transform: uppercase;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+    tr:hover {
+      background-color: #f1f5f9;
+    }
+    .no-result {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Listado de Conductores</h1>
+    
+    <div class="search-box">
+      <input type="text" id="searchInput" onkeyup="filtrarLista()" placeholder="Buscar por Legajo o Nombre...">
+    </div>
+
+    <table id="tablaConductores">
+      <thead>
+        <tr>
+          <th>Legajo</th>
+          <th>Nombre y Apellido</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTabla">
+        <!-- Los datos se cargan automáticamente aquí -->
+      </tbody>
+    </table>
+    <div id="noResult" class="no-result">No se encontraron conductores coincidentes.</div>
+  </div>
+
+  <script>
+    const conductores = [
+      { leg: "7253", nombre: "SORIA GERARDO DAVID" },
+      { leg: "7243", nombre: "DE MIGUEL CRISTIAN RODRIGO" },
+      { leg: "7339", nombre: "MEDRAN KEVIN NICOLAS" },
+      { leg: "7087", nombre: "VERA ALBERTO JOSE MANUEL" },
+      { leg: "7251", nombre: "JUAREZ ROBERTO DANIEL" },
+      { leg: "7454", nombre: "AGUERO JOSE IGNACIO" },
+      { leg: "7075", nombre: "BARBIANI ORESTES EMMANUEL" },
+      { leg: "5266", nombre: "PERETTI SERGIO FABIAN" },
+      { leg: "7443", nombre: "FARIAS JONATHAN NICOLAS" },
+      { leg: "6899", nombre: "BAZAN CARLOS ABEL" },
+      { leg: "1067", nombre: "BIANCIOTTI DAMARIS STELLA" },
+      { leg: "6892", nombre: "VELEZ CLAUDIO SEBASTIAN" },
+      { leg: "7913", nombre: "CAPDEVILA JOSE EDUARDO" },
+      { leg: "7297", nombre: "ARROYO MARCOS DANIEL" },
+      { leg: "7168", nombre: "LOPEZ JAVIER EMMANUEL" },
+      { leg: "6948", nombre: "ALVAREZ FERNANDO EMANUEL" },
+      { leg: "6885", nombre: "BERNARDI MARIO NICOLAS" },
+      { leg: "7944", nombre: "GUZMAN MAXIMILIANO" },
+      { leg: "7272", nombre: "VIDELA MANUEL ALEJANDRO" },
+      { leg: "7244", nombre: "ALVAREZ DANIEL ALEJANDRO" },
+      { leg: "7698", nombre: "ORELLANO AGUSTIN" },
+      { leg: "7093", nombre: "MARQUEZ CLAUDIO JOSE" },
+      { leg: "1091", nombre: "ZARATE CAMILA MICAELA" },
+      { leg: "7250", nombre: "RAMALLO JULIO MARTIN" },
+      { leg: "1114", nombre: "GUTIERREZ ANDREA DEL VALLE" },
+      { leg: "6173", nombre: "OLIVA BRAIAN IVAN" },
+      { leg: "1068", nombre: "CANO ROMINA ALEJANDRA" },
+      { leg: "5620", nombre: "HERRERA SANTIAGO" },
+      { leg: "918", nombre: "BARRETO LICIA VALENTINA" },
+      { leg: "6189", nombre: "COLOGNE PABLO ANDRES" },
+      { leg: "928", nombre: "CARDINALE ZARATE FRANCO DANIEL" },
+      { leg: "6183", nombre: "ALVAREZ MAXIMILIANO DAVID" },
+      { leg: "7398", nombre: "SUAREZ DAVID NATANAEL" },
+      { leg: "7954", nombre: "REINOSO MARTIN EZEQUIEL" },
+      { leg: "7418", nombre: "AGUAT CHAVEZ GASTON AMIR" },
+      { leg: "6181", nombre: "AGUIRRE SENE KEVIN GABRIEL" },
+      { leg: "7461", nombre: "MORENO AVILA KEVIN DANIEL" },
+      { leg: "7261", nombre: "GUEVARA LUIS ALBERTO" },
+      { leg: "7329", nombre: "BLANCO CHRISTIAN" },
+      { leg: "7307", nombre: "CARRANZA MAYCO SAMUEL" },
+      { leg: "7281", nombre: "LOPEZ JONATAN ALFREDO" },
+      { leg: "7966", nombre: "SUAREZ NILDA" },
+      { leg: "6969", nombre: "BOZZER FERNANDO ADRIAN" },
+      { leg: "6191", nombre: "DI MARTINO JESUS NICOLAS" },
+      { leg: "7242", nombre: "RODRIGUEZ GABRIEL OSCAR" },
+      { leg: "7224", nombre: "LUQUE PABLO MARTIN" },
+      { leg: "7295", nombre: "ALCANTARO DIEGO SEBASTIAN" },
+      { leg: "6961", nombre: "BERARDO GERMAN DARIO" },
+      { leg: "5625", nombre: "PONCE IVAR FERNANDO" },
+      { leg: "7279", nombre: "RAMALLO DARIO GABRIEL" },
+      { leg: "7436", nombre: "ESCOBAR HECTOR ABEL" },
+      { leg: "6956", nombre: "PERALTA DIEGO FABIAN" },
+      { leg: "7170", nombre: "PERALTA MARTIN ALEJANDRO" },
+      { leg: "7248", nombre: "ABREGU LUDUEÑA HELIO NORBERTO" },
+      { leg: "7893", nombre: "ROBIN JOSE LUIS" },
+      { leg: "6862", nombre: "VILLACORTA GUSTAVO MANUEL" },
+      { leg: "5611", nombre: "LAZO GUISANO NADIA MELINA" },
+      { leg: "7130", nombre: "BALLISTRERI CLAUDIO JESUS" },
+      { leg: "6872", nombre: "ARCE GUSTAVO FEDERICO" },
+      { leg: "864", nombre: "MONIER ROMINA SOLEDAD" },
+      { leg: "6864", nombre: "PACHECO GUSTAVO ADOLFO" },
+      { leg: "7473", nombre: "JUNCOS YESICA ANAHI" },
+      { leg: "5621", nombre: "LETONA JOAQUIN MANUEL" },
+      { leg: "7246", nombre: "GOMEZ MARTIN" },
+      { leg: "7221", nombre: "ROMERO PABLO" },
+      { leg: "7269", nombre: "WORONA RUBEN" },
+      { leg: "5622", nombre: "LOBATO LUCIANO" },
+      { leg: "5614", nombre: "RAMIREZ PAMELA MARIEL" },
+      { leg: "7472", nombre: "LOPEZ JESICA" },
+      { leg: "6880", nombre: "SALZANO MARCELO BERNARDO" },
+      { leg: "7222", nombre: "CONTRERAS VICTOR GUSTAVO" },
+      { leg: "6988", nombre: "CHUMBITA GUILLERMO FERNANDO" },
+      { leg: "7283", nombre: "LOPEZ WALTER ALEJANDRO" },
+      { leg: "7247", nombre: "GONZALEZ RUBEN DARIO" },
+      { leg: "7240", nombre: "FERNANDEZ MARCOS ELIAS" },
+      { leg: "7238", nombre: "CARREÑO ANGEL FERNANDO" },
+      { leg: "7468", nombre: "GOMEZ OSCAR EZEQUIEL" },
+      { leg: "7328", nombre: "LOPEZ GERARDO DANIEL" },
+      { leg: "1173", nombre: "PRADO JORGE ARIEL" },
+      { leg: "7226", nombre: "HERRERA RICARDO IGNACIO" },
+      { leg: "7255", nombre: "ABALLAY MATIAS EZEQUIEL" },
+      { leg: "7042", nombre: "SUAREZ MARIO ALBERTO" },
+      { leg: "6144", nombre: "LUNA ESTEBAN SEBASTIAN" },
+      { leg: "7236", nombre: "CHARRAS CRISTIAN ISIDRO" },
+      { leg: "7890", nombre: "ARIAS JAVIER MAXIMILIANO" },
+      { leg: "6264", nombre: "SOSA FACUNDO DAMIAN" },
+      { leg: "1172", nombre: "PEREYRA GUTIERREZ JONATHAN HERNAN" },
+      { leg: "7412", nombre: "MOLINA AGUSTIN EMILIANO" },
+      { leg: "7320", nombre: "GODOY FRANCO NICOLAS" },
+      { leg: "7280", nombre: "CUELLO MAXIMILIANO LUCAS" },
+      { leg: "7045", nombre: "ARCE MARCELO JESUS" },
+      { leg: "7629", nombre: "CUEVAS DARIO ROMAN" },
+      { leg: "7277", nombre: "MARTINEZ GERARDO DAVID" },
+      { leg: "7467", nombre: "AGUIRRE ALAN DARIO" },
+      { leg: "7963", nombre: "MADERA RODRIGO" },
+      { leg: "7258", nombre: "PAREDES PEDRO HORACIO" },
+      { leg: "7169", nombre: "PARISI GERARDO ARIEL" },
+      { leg: "7265", nombre: "HEREDIA GERMAN ARIEL" },
+      { leg: "7961", nombre: "GUTIERREZ JUAN PABLO" },
+      { leg: "7024", nombre: "GALINDEZ PATRICIO MARCO" },
+      { leg: "7423", nombre: "DELBIANCO MARIO LUCIANO" },
+      { leg: "6184", nombre: "ARIAS SERGIO EDUARDO" },
+      { leg: "7882", nombre: "PIGINI AMOEDO FLORENCIA MELANI" },
+      { leg: "7456", nombre: "FALCON ENZO AUGUSTO" },
+      { leg: "7445", nombre: "AGUERO DIEGO LEONEL" },
+      { leg: "6259", nombre: "RODRIGUEZ VILLALBA ERICK NAHUEL" },
+      { leg: "7912", nombre: "BOZZETO CRISTIAN FERNANDO" },
+      { leg: "980", nombre: "VILLA HORACIO CIRIO" },
+      { leg: "7931", nombre: "ZAPATA ANABEL" },
+      { leg: "7477", nombre: "HEREDIA FEDERICO RUBEN" },
+      { leg: "7889", nombre: "ARDUH DANIEL ALEJANDRO" },
+      { leg: "7692", nombre: "RIOS HEBER LEONEL" },
+      { leg: "7927", nombre: "ANDRADA BRAIAN LUCAS LAUTARO" },
+      { leg: "6955", nombre: "GIMENEZ CLAUDIO" },
+      { leg: "6933", nombre: "ROMERO SEBASTIAN" },
+      { leg: "6974", nombre: "MOLINA JUAN" },
+      { leg: "7923", nombre: "CARELLI CHRISTIAN EZEQUIEL" },
+      { leg: "5618", nombre: "BRIZUELA IBAR" },
+      { leg: "6918", nombre: "HEREDIA HUGO FEDERICO" },
+      { leg: "7421", nombre: "RODRIGUEZ DANIEL OSCAR" },
+      { leg: "7415", nombre: "GALLEGOS MAXIMILIANO NATANAEL ISAIAS" },
+      { leg: "7256", nombre: "TELLO ROGELIO GREGORIO" },
+      { leg: "7613", nombre: "ACOSTA ROBERTO ENRIQUE" },
+      { leg: "7391", nombre: "BRIZUELA SERGIO ANDRES" },
+      { leg: "7225", nombre: "FLORES HERNAN DARIO" },
+      { leg: "7877", nombre: "ADOVE CARBALLO LEILA BELEN" },
+      { leg: "7448", nombre: "PAREDES GLORIA ROXANA" },
+      { leg: "7900", nombre: "VILLARRUEL JOSE AGUSTIN" },
+      { leg: "7926", nombre: "CONDE ELIZABETH GABRIELA" },
+      { leg: "7886", nombre: "GOMEZ CRISTIAN" },
+      { leg: "6188", nombre: "CHINCHO MARCOS GABRIEL" },
+      { leg: "7908", nombre: "VERA LUCAS GABRIEL" },
+      { leg: "6152", nombre: "CAPDEVILA DIEGO ARMANDO" },
+      { leg: "1046", nombre: "SUAREZ ELIANA JACQUELIN" },
+      { leg: "7163", nombre: "GOMEZ NESTOR OSCAR" },
+      { leg: "7933", nombre: "SANTANA IGNACIO TOMAS" },
+      { leg: "7282", nombre: "MANZANEL OCAMPO FRANCO EZEQUIEL" },
+      { leg: "7234", nombre: "BELTRAMEN JORGE ANDRES" },
+      { leg: "6920", nombre: "VERA MAXIMILIANO EDUARDO" },
+      { leg: "7235", nombre: "GONZALEZ JOSE ARIEL" },
+      { leg: "6978", nombre: "LEDESMA VICTOR JAVIER" },
+      { leg: "7237", nombre: "QUIÑONES CRISTIAN HECTOR" },
+      { leg: "7310", nombre: "MONTOYA NELSON EZEQUIEL" },
+      { leg: "7274", nombre: "GARBINO DANIEL ALBERTO" },
+      { leg: "7465", nombre: "HERRERA RODRIGO ARIEL" },
+      { leg: "7239", nombre: "LOPEZ GUSTAVO JAVIER" },
+      { leg: "7930", nombre: "RODRIGUEZ LAUTARO EZEQUIEL" },
+      { leg: "6871", nombre: "VILLAVICENCIO SERGIO ANTONIO" },
+      { leg: "7278", nombre: "ARCE MILTON MATIAS" },
+      { leg: "7284", nombre: "CAMAÑO OMAR" },
+      { leg: "6197", nombre: "PEIRETTI NESTOR RUBEN" },
+      { leg: "7047", nombre: "MONIER DIEGO ARMANDO" },
+      { leg: "7153", nombre: "ARGUELLO SERGIO HERNAN" },
+      { leg: "6910", nombre: "BUSTOS JOSE DANIEL" },
+      { leg: "6618", nombre: "ORONA MAXIMILIANO GASTON" },
+      { leg: "7259", nombre: "LLANOS ROQUE JAVIER" },
+      { leg: "7910", nombre: "ALARCON PASTOR BRAIAN FERNANDO" },
+      { leg: "7904", nombre: "ESCADA MANUEL ALBERTO" },
+      { leg: "7464", nombre: "CORREA DANIEL ALEJANDRO" },
+      { leg: "7647", nombre: "MENA JUAN JOSE" },
+      { leg: "7903", nombre: "DONAT JOSE MATIAS" },
+      { leg: "6967", nombre: "BLANCO ERNESTO MARCIAL" },
+      { leg: "1093", nombre: "CANTARUTTI SALOME CELESTE" },
+      { leg: "7938", nombre: "CUELLO CECILIA ANABELLA" },
+      { leg: "6150", nombre: "VARA MAURO ALEJANDRO" },
+      { leg: "7928", nombre: "OCHOA KAREN STEFANI" },
+      { leg: "7101", nombre: "SAIG MARCELO ALEJANDRO" },
+      { leg: "7943", nombre: "ROLAND MATIAS EMANUEL" },
+      { leg: "6873", nombre: "RODRIGUEZ VICTOR HUGO" },
+      { leg: "7959", nombre: "CANO BRISA" },
+      { leg: "6877", nombre: "LEDESMA CARLOS EXEQUIEL" },
+      { leg: "7478", nombre: "ARGUELLO TAMARA SABRINA" },
+      { leg: "6916", nombre: "CAPDEVILA JOSE EDUARDO" },
+      { leg: "7438", nombre: "VILLARROEL IGNACIO GASTON" },
+      { leg: "6922", nombre: "MOLINA CRISTIAN SEBATIAN" },
+      { leg: "7947", nombre: "MACCIO MICAELA ABIGAIL" },
+      { leg: "7312", nombre: "ONZAGA FACUNDO PABLO NAHUEL" },
+      { leg: "5609", nombre: "GARRIDO ROBERTA KATHERINA" },
+      { leg: "6980", nombre: "ARGUELLO FERNANDO ARIEL" },
+      { leg: "7480", nombre: "TISSERA CRISTIAN EZEQUIEL" }
+    ];
+
+    function cargarTabla(datos) {
+      const cuerpo = document.getElementById('cuerpoTabla');
+      cuerpo.innerHTML = '';
+      datos.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><strong>${c.leg}</strong></td><td>${c.nombre}</td>`;
+        cuerpo.appendChild(tr);
+      });
+    }
+
+    function filtrarLista() {
+      const filtro = document.getElementById('searchInput').value.toLowerCase();
+      const filtrados = conductores.filter(c => 
+        c.leg.toLowerCase().includes(filtro) || 
+        c.nombre.toLowerCase().includes(filtro)
+      );
+      
+      cargarTabla(filtrados);
+      
+      document.getElementById('noResult').style.display = 
+        filtrados.length === 0 ? 'block' : 'none';
+    }
+
+    // Inicializar tabla al cargar la página
+    cargarTabla(conductores);
+  </script>
+
+</body>
+</html>
