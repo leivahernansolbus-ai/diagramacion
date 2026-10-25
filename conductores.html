@@ -100,7 +100,7 @@
       background-color: #218838;
     }
 
-    /* Buscador y Controles */
+    /* Buscador y Barra de Herramientas */
     .search-box {
       margin-bottom: 15px;
     }
@@ -120,8 +120,30 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
       font-size: 13px;
-      color: #555;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-tool {
+      background-color: #17a2b8;
+      color: white;
+      border: none;
+      padding: 7px 12px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 12px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-tool:hover {
+      background-color: #138496;
     }
     .btn-reset {
       background: none;
@@ -217,9 +239,16 @@
       <input type="text" id="searchInput" onkeyup="filtrarLista()" placeholder="Buscar por Legajo, Nombre o Línea...">
     </div>
 
+    <!-- Barra de Herramientas y Exportar/Importar -->
     <div class="toolbar">
-      <span id="estadoGuardado">💾 Los cambios se guardan automáticamente en este navegador.</span>
-      <button class="btn-reset" onclick="restablecerOriginales()">Restablecer Lista Base</button>
+      <span id="estadoGuardado">💾 Cambios guardados localmente.</span>
+      <div class="toolbar-actions">
+        <button class="btn-tool" onclick="exportarCSV()">📥 Exportar a Excel (CSV)</button>
+        <label class="btn-tool" style="cursor: pointer;">
+          📤 Importar CSV <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importarCSV(event)">
+        </label>
+        <button class="btn-reset" onclick="restablecerOriginales()">Restablecer Base</button>
+      </div>
     </div>
 
     <!-- Tabla -->
@@ -425,7 +454,6 @@
 
     let conductores = [];
 
-    // Cargar datos guardados o inicializar
     function cargarStorage() {
       const guardados = localStorage.getItem('conductores_data');
       if (guardados) {
@@ -480,11 +508,8 @@
         c.nombre.toLowerCase().includes(filtro) ||
         (c.lineas && c.lineas.toLowerCase().includes(filtro))
       );
-      
       cargarTabla(filtrados);
-      
-      document.getElementById('noResult').style.display = 
-        filtrados.length === 0 ? 'block' : 'none';
+      document.getElementById('noResult').style.display = filtrados.length === 0 ? 'block' : 'none';
     }
 
     function agregarConductor() {
@@ -526,15 +551,65 @@
       }
     }
 
+    function exportarCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,Legajo,Nombre y Apellido,Lineas Habilitadas\n";
+      conductores.forEach(c => {
+        let row = [c.leg, `"${c.nombre}"`, `"${c.lineas || ''}"`].join(",");
+        csvContent += row + "\n";
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "nomina_conductores.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function importarCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split("\n");
+        let count = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          const parts = line.split(',');
+          if (parts.length >= 2) {
+            const leg = Number(parts[0].replace(/"/g, "").trim());
+            const nombre = parts[1].replace(/"/g, "").trim().toUpperCase();
+            const lineas = parts[2] ? parts[2].replace(/"/g, "").trim() : "";
+            if (leg && nombre) {
+              const existeIndex = conductores.findIndex(c => Number(c.leg) === leg);
+              if (existeIndex >= 0) {
+                conductores[existeIndex].nombre = nombre;
+                conductores[existeIndex].lineas = lineas;
+              } else {
+                conductores.push({ leg, nombre, lineas });
+                count++;
+              }
+            }
+          }
+        }
+        ordenarLista();
+        guardarStorage();
+        cargarTabla(conductores);
+        alert(`¡Importación completada con éxito! Se procesaron los registros.`);
+      };
+      reader.readAsText(file);
+    }
+
     function restablecerOriginales() {
-      if (confirm('¿Desea restablecer la lista original? Se perderán las modificaciones personalizadas no guardadas en código.')) {
+      if (confirm('¿Desea restablecer la lista original? Se perderán las modificaciones personalizadas.')) {
         localStorage.removeItem('conductores_data');
         cargarStorage();
         cargarTabla(conductores);
       }
     }
 
-    // Inicializar
     cargarStorage();
     cargarTabla(conductores);
   </script>
