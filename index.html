@@ -1038,3 +1038,189 @@ eof
 
   <div class="container">
   
+<!-- Módulo de Planificación Mensual y Feriados -->
+<div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-bottom: 20px;">
+  <h2 style="color: #0066cc; margin-top: 0;">📅 Planificación Operativa Mensual</h2>
+  <p style="color: #666; font-size: 14px;">Seleccione el periodo y configure los feriados para calcular la dotación exacta.</p>
+
+  <!-- Selector de Mes y Año -->
+  <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+    <div>
+      <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">Año:</label>
+      <input type="number" id="planAnio" value="2026" style="padding: 8px; border: 1px solid #ccc; border-radius: 5px;" onchange="actualizarPlanificacion()">
+    </div>
+    <div>
+      <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">Mes:</label>
+      <select id="planMes" style="padding: 8px; border: 1px solid #ccc; border-radius: 5px;" onchange="actualizarPlanificacion()">
+        <option value="1">Enero</option>
+        <option value="2">Febrero</option>
+        <option value="3">Marzo</option>
+        <option value="4">Abril</option>
+        <option value="5">Mayo</option>
+        <option value="6">Junio</option>
+        <option value="7">Julio</option>
+        <option value="8">Agosto</option>
+        <option value="9">Septiembre</option>
+        <option value="10">Octubre</option>
+        <option value="11" selected>Noviembre</option>
+        <option value="12">Diciembre</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Resumen de Resultados -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px;">
+    <div style="background: #f1f5f9; padding: 12px; border-radius: 6px; text-align: center;">
+      <span style="font-size: 12px; color: #555; display: block;">Total Días</span>
+      <strong id="lblTotalDias" style="font-size: 18px; color: #333;">0</strong>
+    </div>
+    <div style="background: #e8f4fd; padding: 12px; border-radius: 6px; text-align: center;">
+      <span style="font-size: 12px; color: #0066cc; display: block;">Francos Req.</span>
+      <strong id="lblFrancos" style="font-size: 18px; color: #0066cc;">0</strong>
+    </div>
+    <div style="background: #e6f9ed; padding: 12px; border-radius: 6px; text-align: center;">
+      <span style="font-size: 12px; color: #28a745; display: block;">Días Hábiles</span>
+      <strong id="lblHabiles" style="font-size: 18px; color: #28a745;">0</strong>
+    </div>
+    <div style="background: #fff3cd; padding: 12px; border-radius: 6px; text-align: center;">
+      <span style="font-size: 12px; color: #856404; display: block;">Sábados</span>
+      <strong id="lblSabados" style="font-size: 18px; color: #856404;">0</strong>
+    </div>
+    <div style="background: #f8d7da; padding: 12px; border-radius: 6px; text-align: center;">
+      <span style="font-size: 12px; color: #721c24; display: block;">Domingos / Feriados</span>
+      <strong id="lblDomingosFeriados" style="font-size: 18px; color: #721c24;">0</strong>
+    </div>
+  </div>
+
+  <!-- Gestión de Feriados del Mes -->
+  <div style="border-top: 1px solid #eee; padding-top: 15px;">
+    <h3 style="font-size: 15px; color: #333; margin-bottom: 10px;">⭐ Agregar Feriado o Día Especial</h3>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+      <input type="date" id="feriadoFecha" style="padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+      <input type="text" id="feriadoMotivo" placeholder="Motivo (ej: Día de la Soberanía)" style="padding: 8px; border: 1px solid #ccc; border-radius: 5px; flex: 2; min-width: 180px;">
+      <select id="feriadoTipo" style="padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+        <option value="domingo">Funciona como Domingo</option>
+        <option value="sabado">Funciona como Sábado</option>
+      </select>
+      <button onclick="agregarFeriado()" style="background-color: #0066cc; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">Agregar Feriado</button>
+    </div>
+    
+    <!-- Lista de Feriados Agregados -->
+    <div id="listaFeriados" style="font-size: 13px; color: #555; margin-top: 10px;">
+      <em>No hay feriados personalizados agregados para este mes.</em>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Almacén local de feriados por mes (ej: "2026-11": [{fecha: "2026-11-20", motivo: "Feriado", tipo: "domingo"}])
+  let feriadosCustom = JSON.parse(localStorage.getItem('feriados_custom') || '{}');
+
+  function actualizarPlanificacion() {
+    const anio = Number(document.getElementById('planAnio').value);
+    const mes = Number(document.getElementById('planMes').value);
+
+    const totalDias = new Date(anio, mes, 0).getDate();
+    let diasHabiles = 0;
+    let sabados = 0;
+    let domingos = 0;
+
+    // Obtener feriados para este mes/año
+    const mesKey = `${anio}-${String(mes).padStart(2, '0')}`;
+    const feriadosDelMes = feriadosCustom[mesKey] || [];
+    
+    // Convertir feriados en un diccionario de fechas para consulta rápida
+    let feriadosMap = {};
+    feriadosDelMes.forEach(f => {
+      feriadosMap[f.fecha] = f.tipo; // 'domingo' o 'sabado'
+    });
+
+    for (let dia = 1; dia <= totalDias; dia++) {
+      const fechaStr = `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      const fechaObj = new Date(anio, mes - 1, dia);
+      const diaSemana = fechaObj.getDay(); // 0: Dom, 6: Sáb
+
+      if (feriadosMap[fechaStr]) {
+        // Si es feriado custom, suma según cómo se trabaja
+        if (feriadosMap[fechaStr] === 'domingo') domingos++;
+        if (feriadosMap[fechaStr] === 'sabado') sabados++;
+      } else {
+        if (diaSemana === 0) domingos++;
+        else if (diaSemana === 6) sabados++;
+        else diasHabiles++;
+      }
+    }
+
+    // Regla de Francos (31 días = 7, 30 días = 6, 28-29 días = 4-5)
+    let francosReq = (totalDias === 31) ? 7 : (totalDias === 30 ? 6 : (totalDias === 29 ? 5 : 4));
+
+    // Mostrar en pantalla
+    document.getElementById('lblTotalDias').innerText = totalDias;
+    document.getElementById('lblFrancos').innerText = francosReq;
+    document.getElementById('lblHabiles').innerText = diasHabiles;
+    document.getElementById('lblSabados').innerText = sabados;
+    document.getElementById('lblDomingosFeriados').innerText = domingos;
+
+    renderizarListaFeriados(feriadosDelMes, mesKey);
+  }
+
+  function agregarFeriado() {
+    const fecha = document.getElementById('feriadoFecha').value;
+    const motivo = document.getElementById('feriadoMotivo').value.trim();
+    const tipo = document.getElementById('feriadoTipo').value;
+
+    if (!fecha) {
+      alert('Por favor selecciona la fecha del feriado.');
+      return;
+    }
+
+    const [anio, mes] = fecha.split('-');
+    const mesKey = `${anio}-${mes}`;
+
+    if (!feriadosCustom[mesKey]) {
+      feriadosCustom[mesKey] = [];
+    }
+
+    feriadosCustom[mesKey].push({ fecha, motivo: motivo || 'Feriado', tipo });
+    localStorage.setItem('feriados_custom', JSON.stringify(feriadosCustom));
+
+    // Sincronizar selectores visuales con la fecha elegida
+    document.getElementById('planAnio').value = anio;
+    document.getElementById('planMes').value = Number(mes);
+
+    document.getElementById('feriadoFecha').value = '';
+    document.getElementById('feriadoMotivo').value = '';
+
+    actualizarPlanificacion();
+  }
+
+  function eliminarFeriado(mesKey, index) {
+    feriadosCustom[mesKey].splice(index, 1);
+    if (feriadosCustom[mesKey].length === 0) {
+      delete feriadosCustom[mesKey];
+    }
+    localStorage.setItem('feriados_custom', JSON.stringify(feriadosCustom));
+    actualizarPlanificacion();
+  }
+
+  function renderizarListaFeriados(lista, mesKey) {
+    const contenedor = document.getElementById('listaFeriados');
+    if (!lista || lista.length === 0) {
+      contenedor.innerHTML = '<em>No hay feriados personalizados agregados para este mes.</em>';
+      return;
+    }
+
+    let html = '<ul style="margin: 0; padding-left: 20px;">';
+    lista.forEach((f, idx) => {
+      html += `<li><b>${f.fecha}</b> - ${f.motivo} (Computado como: <i>${f.tipo}</i>) 
+               <button onclick="eliminarFeriado('${mesKey}', ${idx})" style="background:none; border:none; color:red; cursor:pointer; text-decoration:underline; font-size:12px;">Eliminar</button></li>`;
+    });
+    html += '</ul>';
+    contenedor.innerHTML = html;
+  }
+
+  // Ejecutar al cargar la página
+  window.onload = function() {
+    actualizarPlanificacion();
+  };
+</script>
