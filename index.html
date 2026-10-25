@@ -590,12 +590,14 @@
         const text = e.target.result;
         const lines = text.split("\n");
         let count = 0;
+        
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i].trim();
           if (!line) continue;
           const parts = line.split(',');
           if (parts.length >= 4) {
-            const linea = parts[0].replace(/"/g, "").trim();
+            // Limpiar y estandarizar el nombre de la línea en mayúsculas para evitar desacoples
+            const linea = parts[0].replace(/"/g, "").trim().toUpperCase();
             const codigo = parts[1].replace(/"/g, "").trim();
             const turno = parts[2].replace(/"/g, "").trim();
             const horario = parts[3].replace(/"/g, "").trim();
@@ -607,17 +609,26 @@
               if (!serviciosTransporte[linea]) {
                 serviciosTransporte[linea] = [];
               }
-              const existeServicio = serviciosTransporte[linea].some(s => s.codigo === codigo);
-              if (!existeServicio) {
+              // Verificar si ya existe el servicio para actualizarlo o agregarlo
+              const existeIndex = serviciosTransporte[linea].findIndex(s => s.codigo === codigo);
+              if (existeIndex >= 0) {
+                serviciosTransporte[linea][existeIndex] = { codigo, turno, horario };
+              } else {
                 serviciosTransporte[linea].push({ codigo, turno, horario });
-                count++;
               }
+              count++;
             }
           }
         }
         guardarDatosDiagramacion();
+        
+        // Forzar la selección de la primera línea importada para ver el impacto visual al instante
+        if (lineasTransporte.length > 0) {
+          lineaActual = lineasTransporte[0];
+        }
+        
         inicializarDiagramacion();
-        alert(`¡Importación de servicios completada con éxito! Se procesaron nuevos registros.`);
+        alert(`¡Importación completada con éxito! Se procesaron ${count} registros y se actualizó la interfaz.`);
       };
       reader.readAsText(file);
     }
