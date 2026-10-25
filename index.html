@@ -123,6 +123,28 @@
       background-color: #f1f5f9;
     }
 
+    /* Pestañas de Tipo de Día */
+    .tab-dias {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      border: 1px solid #cbd5e1;
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .tab-btn.active {
+      background: #0066cc;
+      color: white;
+      border-color: #0066cc;
+    }
+
     /* Estilos específicos para la Matriz Mensual */
     .matriz-container {
       width: 100%;
@@ -150,7 +172,6 @@
       top: 0;
       z-index: 2;
     }
-    /* Columna fija de Servicios a la izquierda */
     .col-fija-servicio {
       position: sticky;
       left: 0;
@@ -205,7 +226,7 @@
     <div id="sec-dashboard" class="content-section active">
       <div class="card">
         <h2>Panel Operativo General</h2>
-        <p>Bienvenido al sistema de diagramación de transporte. Utilice la barra lateral izquierda para navegar entre el administrador de líneas, los turnos, la planificación mensual y la matriz de diagramación.</p>
+        <p>Bienvenido al sistema de diagramación de transporte. Utilice la barra lateral izquierda para navegar entre el administrador de líneas, turnos diferenciados, planificación mensual y matriz de diagramación.</p>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 25px;">
           <div style="background: #e8f4fd; padding: 20px; border-radius: 8px; border-left: 5px solid #0066cc;">
@@ -224,18 +245,17 @@
     <div id="sec-diagramacion" class="content-section">
       <div class="card">
         <h2>Diagramación y Servicios por Línea</h2>
-        <p style="color: #666; font-size: 14px;">Administre las líneas de transporte y configure los turnos independientes de cada corredor.</p>
+        <p style="color: #666; font-size: 14px;">Administre las líneas y configure los turnos discriminados por tipo de día (Hábil, Sábado, Domingo/Feriado).</p>
 
         <!-- Gestión de Líneas -->
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
           <h3 style="font-size: 15px; color: #333; margin-top: 0; margin-bottom: 10px;">📋 Gestión de Líneas</h3>
           <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-            <input type="text" id="nombreNuevaLinea" placeholder="Nombre o número de línea (ej: Línea 70)" style="flex: 2; min-width: 200px;">
+            <input type="text" id="nombreNuevaLinea" placeholder="Nombre o número de línea (ej: LINEA 70)" style="flex: 2; min-width: 200px;">
             <button onclick="agregarLinea()" style="background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">+ Agregar Línea</button>
           </div>
           <div id="contenedorListaLineas" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
 
-          <!-- Botones de Exportar / Importar CSV de Servicios -->
           <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
             <button onclick="exportarServiciosCSV()" style="background-color: #17a2b8; color: white; border: none; padding: 7px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 12px;">📥 Exportar Servicios (CSV)</button>
             <label style="background-color: #17a2b8; color: white; border-radius: 5px; padding: 7px 12px; font-weight: bold; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center;">
@@ -244,7 +264,7 @@
           </div>
         </div>
 
-        <!-- Servicios por Línea -->
+        <!-- Servicios por Línea y Tipo de Día -->
         <div id="seccionServicios" style="display: none;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
             <h3 id="tituloLineaActiva" style="margin: 0; color: #0066cc; font-size: 18px;">Servicios para: Línea</h3>
@@ -254,10 +274,17 @@
             </div>
           </div>
 
+          <!-- Pestañas de Tipo de Día -->
+          <div class="tab-dias">
+            <button class="tab-btn active" onclick="cambiarTipoDiaTab('Habil', this)">📅 Días Hábiles</button>
+            <button class="tab-btn" onclick="cambiarTipoDiaTab('Sabado', this)">🟡 Sábados</button>
+            <button class="tab-btn" onclick="cambiarTipoDiaTab('Domingo', this)">🔴 Domingos / Feriados</button>
+          </div>
+
           <div style="background: #e8f4fd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-            <h4 style="margin-top: 0; font-size: 14px; color: #0066cc; margin-bottom: 10px;">➕ Nuevo Servicio / Turno</h4>
+            <h4 id="tituloFormServicio" style="margin-top: 0; font-size: 14px; color: #0066cc; margin-bottom: 10px;">➕ Nuevo Servicio / Turno (Días Hábiles)</h4>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <input type="text" id="servCodigo" placeholder="Cód. Servicio (ej: 1, 101, 201)" style="flex: 1; min-width: 120px;">
+              <input type="text" id="servCodigo" placeholder="Cód. Servicio (ej: 1, 101)" style="flex: 1; min-width: 120px;">
               <select id="servTurno" style="flex: 1; min-width: 140px;">
                 <option value="Mañana">Mañana</option>
                 <option value="Tarde">Tarde</option>
@@ -280,7 +307,7 @@
             </thead>
             <tbody id="cuerpoTablaServicios"></tbody>
           </table>
-          <div id="noServicios" style="text-align: center; padding: 20px; color: #777; display: none; font-size: 14px;">No hay servicios cargados para esta línea.</div>
+          <div id="noServicios" style="text-align: center; padding: 20px; color: #777; display: none; font-size: 14px;">No hay servicios cargados para este tipo de día en esta línea.</div>
         </div>
       </div>
     </div>
@@ -354,13 +381,12 @@
       </div>
     </div>
 
-    <!-- SECCIÓN 4: MATRIZ MENSUAL (DIAGRAMACIÓN POR DÍAS) -->
+    <!-- SECCIÓN 4: MATRIZ MENSUAL -->
     <div id="sec-matriz" class="content-section">
       <div class="card">
         <h2>Matriz de Diagramación Mensual</h2>
-        <p style="color: #666; font-size: 14px;">Visualice los servicios de la línea en formato de planilla mensual y asigne el personal correspondiente para cada día.</p>
+        <p style="color: #666; font-size: 14px;">Visualiza los servicios según el tipo de día correspondiente (Hábiles, Sábados o Domingos/Feriados) y asigna el personal.</p>
 
-        <!-- Controles de Matriz -->
         <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
           <div>
             <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">Seleccionar Línea:</label>
@@ -389,14 +415,11 @@
           </div>
         </div>
 
-        <!-- Contenedor con scroll horizontal para la matriz -->
         <div class="matriz-container">
-          <table class="table-matriz" id="tablaMatrizPrincipal">
-            <!-- Generado por JavaScript -->
-          </table>
+          <table class="table-matriz" id="tablaMatrizPrincipal"></table>
         </div>
         <div id="matrizMsgVacio" style="text-align: center; padding: 25px; color: #777; display: none; font-size: 14px;">
-          No hay servicios cargados para esta línea o no se ha seleccionado ninguna línea.
+          No hay servicios cargados para esta línea en los diferentes tipos de día.
         </div>
       </div>
     </div>
@@ -420,10 +443,12 @@
       }
     }
 
-    // --- MÓDULO: LÍNEAS Y SERVICIOS ---
+    // --- MÓDULO: LÍNEAS Y SERVICIOS CON TIPO DE DÍA ---
     let lineasTransporte = JSON.parse(localStorage.getItem('lineas_transporte') || '[]');
+    // Estructura: serviciosTransporte[linea] = { Habil: [], Sabado: [], Domingo: [] }
     let serviciosTransporte = JSON.parse(localStorage.getItem('servicios_transporte') || '{}');
     let lineaActual = '';
+    let tipoDiaActual = 'Habil'; // 'Habil', 'Sabado', 'Domingo'
 
     function guardarDatosDiagramacion() {
       localStorage.setItem('lineas_transporte', JSON.stringify(lineasTransporte));
@@ -432,7 +457,7 @@
 
     function inicializarDiagramacion() {
       if (lineasTransporte.length === 0) {
-        lineasTransporte = ["Línea 70", "Línea 10", "Línea 20"];
+        lineasTransporte = ["LINEA 70", "LINEA 10", "LINEA 20"];
         guardarDatosDiagramacion();
       }
       if (!lineaActual && lineasTransporte.length > 0) {
@@ -495,9 +520,22 @@
       renderizarServiciosTabla();
     }
 
+    function cambiarTipoDiaTab(tipo, btn) {
+      tipoDiaActual = tipo;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const titForm = document.getElementById('tituloFormServicio');
+      if (tipo === 'Habil') titForm.innerText = '➕ Nuevo Servicio / Turno (Días Hábiles)';
+      if (tipo === 'Sabado') titForm.innerText = '➕ Nuevo Servicio / Turno (Sábados)';
+      if (tipo === 'Domingo') titForm.innerText = '➕ Nuevo Servicio / Turno (Domingos / Feriados)';
+
+      renderizarServiciosTabla();
+    }
+
     function agregarLinea() {
       const input = document.getElementById('nombreNuevaLinea');
-      const nombre = input.value.trim();
+      const nombre = input.value.trim().toUpperCase();
       if (!nombre) { alert('Ingrese el nombre de la línea.'); return; }
       if (lineasTransporte.includes(nombre)) { alert('Esa línea ya existe.'); return; }
       lineasTransporte.push(nombre);
@@ -522,9 +560,18 @@
       const turno = document.getElementById('servTurno').value;
       const horario = document.getElementById('servHorario').value.trim();
       if (!codigo || !horario) { alert('Complete el código de servicio y la franja horaria.'); return; }
-      if (!serviciosTransporte[lineaActual]) serviciosTransporte[lineaActual] = [];
-      serviciosTransporte[lineaActual].push({ codigo, turno, horario });
+
+      if (!serviciosTransporte[lineaActual]) {
+        serviciosTransporte[lineaActual] = { Habil: [], Sabado: [], Domingo: [] };
+      }
+      // Compatibilidad con formato antiguo si era array
+      if (Array.isArray(serviciosTransporte[lineaActual])) {
+        serviciosTransporte[lineaActual] = { Habil: [...serviciosTransporte[lineaActual]], Sabado: [], Domingo: [] };
+      }
+
+      serviciosTransporte[lineaActual][tipoDiaActual].push({ codigo, turno, horario });
       guardarDatosDiagramacion();
+
       document.getElementById('servCodigo').value = '';
       document.getElementById('servHorario').value = '';
       renderizarServiciosTabla();
@@ -532,7 +579,7 @@
 
     function eliminarServicio(index) {
       if (confirm('¿Eliminar este servicio / turno?')) {
-        serviciosTransporte[lineaActual].splice(index, 1);
+        serviciosTransporte[lineaActual][tipoDiaActual].splice(index, 1);
         guardarDatosDiagramacion();
         renderizarServiciosTabla();
       }
@@ -543,12 +590,21 @@
       const msgNoResult = document.getElementById('noServicios');
       if (!tbody) return;
       tbody.innerHTML = '';
-      const lista = (serviciosTransporte[lineaActual] || []);
+
+      if (!serviciosTransporte[lineaActual]) {
+        serviciosTransporte[lineaActual] = { Habil: [], Sabado: [], Domingo: [] };
+      }
+      if (Array.isArray(serviciosTransporte[lineaActual])) {
+        serviciosTransporte[lineaActual] = { Habil: [...serviciosTransporte[lineaActual]], Sabado: [], Domingo: [] };
+      }
+
+      const lista = serviciosTransporte[lineaActual][tipoDiaActual] || [];
       if (lista.length === 0) {
         if (msgNoResult) msgNoResult.style.display = 'block';
         return;
       }
       if (msgNoResult) msgNoResult.style.display = 'none';
+
       lista.forEach((s, idx) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -563,20 +619,25 @@
       });
     }
 
-    // --- FUNCIONES DE EXPORTAR E IMPORTAR SERVICIOS CSV ---
+    // --- EXPORTAR E IMPORTAR CSV CON TIPO DE DÍA ---
     function exportarServiciosCSV() {
-      let csvContent = "data:text/csv;charset=utf-8,Linea,CodigoServicio,Turno,Horario\n";
+      let csvContent = "data:text/csv;charset=utf-8,Linea,TipoDia,CodigoServicio,Turno,Horario\n";
       for (let linea in serviciosTransporte) {
-        let lista = serviciosTransporte[linea] || [];
-        lista.forEach(s => {
-          let row = [`"${linea}"`, `"${s.codigo}"`, `"${s.turno}"`, `"${s.horario}"`].join(",");
-          csvContent += row + "\n";
+        let obj = serviciosTransporte[linea];
+        // Soportar formato estructurado o viejo
+        let tipos = ['Habil', 'Sabado', 'Domingo'];
+        tipos.forEach(t => {
+          let lista = Array.isArray(obj) ? (t === 'Habil' ? obj : []) : (obj[t] || []);
+          lista.forEach(s => {
+            let row = [`"${linea}"`, `"${t}"`, `"${s.codigo}"`, `"${s.turno}"`, `"${s.horario}"`].join(",");
+            csvContent += row + "\n";
+          });
         });
       }
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "servicios_diagramacion.csv");
+      link.setAttribute("download", "servicios_discriminados_por_dia.csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -590,50 +651,65 @@
         const text = e.target.result;
         const lines = text.split("\n");
         let count = 0;
-        
+
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i].trim();
           if (!line) continue;
           const parts = line.split(',');
-          if (parts.length >= 4) {
-            // Limpiar y estandarizar el nombre de la línea en mayúsculas para evitar desacoples
+          // Formato nuevo: Linea,TipoDia,CodigoServicio,Turno,Horario (5 partes)
+          // O formato viejo: Linea,CodigoServicio,Turno,Horario (4 partes -> se asume Habil)
+          if (parts.length >= 5) {
+            const linea = parts[0].replace(/"/g, "").trim().toUpperCase();
+            let tipoDia = parts[1].replace(/"/g, "").trim();
+            // Normalizar tipoDia
+            if (tipoDia.toLowerCase().includes('sab')) tipoDia = 'Sabado';
+            else if (tipoDia.toLowerCase().includes('dom') || tipoDia.toLowerCase().includes('fer')) tipoDia = 'Domingo';
+            else tipoDia = 'Habil';
+
+            const codigo = parts[2].replace(/"/g, "").trim();
+            const turno = parts[3].replace(/"/g, "").trim();
+            const horario = parts[4].replace(/"/g, "").trim();
+
+            if (linea && codigo) {
+              if (!lineasTransporte.includes(linea)) lineasTransporte.push(linea);
+              if (!serviciosTransporte[linea] || Array.isArray(serviciosTransporte[linea])) {
+                serviciosTransporte[linea] = { Habil: [], Sabado: [], Domingo: [] };
+              }
+
+              const existe = serviciosTransporte[linea][tipoDia].some(s => s.codigo === codigo);
+              if (!existe) {
+                serviciosTransporte[linea][tipoDia].push({ codigo, turno, horario });
+                count++;
+              }
+            }
+          } else if (parts.length === 4) {
+            // Compatibilidad CSV anterior
             const linea = parts[0].replace(/"/g, "").trim().toUpperCase();
             const codigo = parts[1].replace(/"/g, "").trim();
             const turno = parts[2].replace(/"/g, "").trim();
             const horario = parts[3].replace(/"/g, "").trim();
 
             if (linea && codigo) {
-              if (!lineasTransporte.includes(linea)) {
-                lineasTransporte.push(linea);
+              if (!lineasTransporte.includes(linea)) lineasTransporte.push(linea);
+              if (!serviciosTransporte[linea] || Array.isArray(serviciosTransporte[linea])) {
+                serviciosTransporte[linea] = { Habil: [], Sabado: [], Domingo: [] };
               }
-              if (!serviciosTransporte[linea]) {
-                serviciosTransporte[linea] = [];
+              const existe = serviciosTransporte[linea]['Habil'].some(s => s.codigo === codigo);
+              if (!existe) {
+                serviciosTransporte[linea]['Habil'].push({ codigo, turno, horario });
+                count++;
               }
-              // Verificar si ya existe el servicio para actualizarlo o agregarlo
-              const existeIndex = serviciosTransporte[linea].findIndex(s => s.codigo === codigo);
-              if (existeIndex >= 0) {
-                serviciosTransporte[linea][existeIndex] = { codigo, turno, horario };
-              } else {
-                serviciosTransporte[linea].push({ codigo, turno, horario });
-              }
-              count++;
             }
           }
         }
         guardarDatosDiagramacion();
-        
-        // Forzar la selección de la primera línea importada para ver el impacto visual al instante
-        if (lineasTransporte.length > 0) {
-          lineaActual = lineasTransporte[0];
-        }
-        
         inicializarDiagramacion();
-        alert(`¡Importación completada con éxito! Se procesaron ${count} registros y se actualizó la interfaz.`);
+        alert(`¡Importación exitosa! Se procesaron ${count} servicios discriminados por tipo de día.`);
       };
       reader.readAsText(file);
     }
 
-    // --- MÓDULO: PLANIFICACIÓN MENSUAL ---
+    // --- PLANIFICACIÓN MENSUAL ---
     let feriadosCustom = JSON.parse(localStorage.getItem('feriados_custom') || '{}');
 
     function actualizarPlanificacion() {
@@ -715,7 +791,7 @@
       contenedor.innerHTML = html;
     }
 
-    // --- MÓDULO: MATRIZ MENSUAL ---
+    // --- MATRIZ MENSUAL INTELIGENTE (ADAPTA LOS SERVICIOS SEGÚN EL DÍA) ---
     function inicializarMatrizSelects() {
       const select = document.getElementById('matrizSelectLinea');
       if (!select) return;
@@ -731,58 +807,115 @@
 
     function renderizarMatriz() {
       const lineaSel = document.getElementById('matrizSelectLinea').value;
-      const anio = document.getElementById('matrizAnio').value;
-      const mes = document.getElementById('matrizMes').value;
+      const anio = Number(document.getElementById('matrizAnio').value);
+      const mes = Number(document.getElementById('matrizMes').value);
       const tabla = document.getElementById('tablaMatrizPrincipal');
       const msgVacio = document.getElementById('matrizMsgVacio');
 
       tabla.innerHTML = '';
-
-      const serviciosLinea = serviciosTransporte[lineaSel] || [];
-      if (serviciosLinea.length === 0) {
+      if (!lineaSel) {
         msgVacio.style.display = 'block';
         return;
       }
-      msgVacio.style.display = 'none';
 
       const totalDias = new Date(anio, mes, 0).getDate();
       const conductoresList = JSON.parse(localStorage.getItem('conductores_data') || '[]');
       const matrizKey = `matriz_${anio}_${mes}_${lineaSel}`;
       let datosMatriz = JSON.parse(localStorage.getItem(matrizKey) || '{}');
 
+      const mesKey = `${anio}-${String(mes).padStart(2, '0')}`;
+      const feriadosDelMes = feriadosCustom[mesKey] || [];
+      let feriadosMap = {};
+      feriadosDelMes.forEach(f => { feriadosMap[f.fecha] = f.tipo; });
+
+      // Recopilar todos los servicios únicos de la línea (Hábiles, Sábados, Domingos) para armar las filas de la matriz
+      let structServicios = serviciosTransporte[lineaSel] || { Habil: [], Sabado: [], Domingo: [] };
+      if (Array.isArray(structServicios)) {
+        structServicios = { Habil: [...structServicios], Sabado: [], Domingo: [] };
+      }
+
+      // Unificar códigos de servicios para mostrar en la matriz
+      let mapServiciosUnicos = new Map();
+      ['Habil', 'Sabado', 'Domingo'].forEach(tipo => {
+        (structServicios[tipo] || []).forEach(s => {
+          mapServiciosUnicos.set(s.codigo, s);
+        });
+      });
+
+      const listaServiciosTotales = Array.from(mapServiciosUnicos.values());
+      if (listaServiciosTotales.length === 0) {
+        msgVacio.style.display = 'block';
+        return;
+      }
+      msgVacio.style.display = 'none';
+
       const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-      // Fila de Cabecera (Días y Nombre del Día de la Semana)
+      // Cabecera de la matriz
       let theadHtml = '<thead><tr>';
       theadHtml += `<th class="col-fija-servicio">SERVICIO / DÍA</th>`;
       for (let d = 1; d <= totalDias; d++) {
         const fechaObj = new Date(anio, mes - 1, d);
-        const nombreDia = diasSemana[fechaObj.getDay()];
-        theadHtml += `<th><span style="font-size: 10px; display: block; color: #cbd5e1; font-weight: normal;">${nombreDia}</span>${d}</th>`;
+        const diaSemana = fechaObj.getDay();
+        const fechaStr = `${anio}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const nombreDia = diasSemana[diaSemana];
+
+        // Determinar si opera como domingo, sábado o hábil este día particular
+        let tipoDiaCol = 'Habil';
+        if (feriadosMap[fechaStr]) {
+          tipoDiaCol = feriadosMap[fechaStr] === 'domingo' ? 'Domingo' : 'Sabado';
+        } else if (diaSemana === 0) {
+          tipoDiaCol = 'Domingo';
+        } else if (diaSemana === 6) {
+          tipoDiaCol = 'Sabado';
+        }
+
+        theadHtml += `<th><span style="font-size: 9px; display: block; color: #cbd5e1; font-weight: normal;">${nombreDia} (${tipoDiaCol.substring(0,3)})</span>${d}</th>`;
       }
       theadHtml += '</tr></thead>';
 
-      // Cuerpo de la Matriz (Servicios en filas)
+      // Cuerpo de la matriz
       let tbodyHtml = '<tbody>';
-      serviciosLinea.forEach(s => {
+      listaServiciosTotales.forEach(s => {
         tbodyHtml += `<tr>`;
         tbodyHtml += `<td class="col-fija-servicio">Serv. ${s.codigo}<br><small style="font-weight:normal; color:#555;">${s.turno}</small></td>`;
         
         for (let d = 1; d <= totalDias; d++) {
-          const cellKey = `s_${s.codigo}_d_${d}`;
-          const conductorAsignado = datosMatriz[cellKey] || '';
+          const fechaStr = `${anio}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const fechaObj = new Date(anio, mes - 1, d);
+          const diaSemana = fechaObj.getDay();
 
-          tbodyHtml += `<td>
-            <select class="select-conductor-celda" onchange="guardarCeldaMatriz('${matrizKey}', '${cellKey}', this.value)">
-              <option value="">-- Libre --</option>`;
-          
-          conductoresList.forEach(c => {
-            const valStr = `${c.leg} - ${c.nombre}`;
-            const selected = (conductorAsignado === valStr) ? 'selected' : '';
-            tbodyHtml += `<option value="${valStr}" ${selected}>${c.leg} ${c.nombre.split(' ')[0]}</option>`;
-          });
+          let tipoDiaCol = 'Habil';
+          if (feriadosMap[fechaStr]) {
+            tipoDiaCol = feriadosMap[fechaStr] === 'domingo' ? 'Domingo' : 'Sabado';
+          } else if (diaSemana === 0) {
+            tipoDiaCol = 'Domingo';
+          } else if (diaSemana === 6) {
+            tipoDiaCol = 'Sabado';
+          }
 
-          tbodyHtml += `</select></td>`;
+          // Verificar si este servicio opera en este tipo de día
+          const operaEnEsteDia = (structServicios[tipoDiaCol] || []).some(serv => serv.codigo === s.codigo);
+
+          if (!operaEnEsteDia) {
+            // Si el servicio no corre este día (ej. servicio exclusivo de hábil que cae domingo)
+            tbodyHtml += `<td style="background-color: #f1f5f9; color: #94a3b8; font-size: 10px;">- Sin Serv. -</td>`;
+          } else {
+            const cellKey = `s_${s.codigo}_d_${d}`;
+            const conductorAsignado = datosMatriz[cellKey] || '';
+
+            tbodyHtml += `<td>
+              <select class="select-conductor-celda" onchange="guardarCeldaMatriz('${matrizKey}', '${cellKey}', this.value)">
+                <option value="">-- Libre --</option>`;
+            
+            conductoresList.forEach(c => {
+              const valStr = `${c.leg} - ${c.nombre}`;
+              const selected = (conductorAsignado === valStr) ? 'selected' : '';
+              tbodyHtml += `<option value="${valStr}" ${selected}>${c.leg} ${c.nombre.split(' ')[0]}</option>`;
+            });
+
+            tbodyHtml += `</select></td>`;
+          }
         }
         tbodyHtml += `</tr>`;
       });
